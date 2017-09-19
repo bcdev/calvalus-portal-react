@@ -1,9 +1,12 @@
+@import "../../node_modules/@blueprintjs/core/dist/blueprint.css";
+
 .container {
     height: 100vh;
     width: 100vw;
     display: flex;
     flex-direction: column;
     font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: none;
 }
 
 .header {
@@ -16,16 +19,35 @@
 
 .main {
     height: calc(100% - 110px);
-    background-color: green;
+    display: flex;
+    flex-direction: column;
 }
 
-.footer {
+.code-editor {
+    margin: 10px;
+}
+
+.submit-button-container {
+    margin: 10px;
+}
+
+.pt-button.pt-intent-primary {
+    background: #373B50 none;
+    color: white;
+}
+
+.pt-button.pt-intent-primary:hover {
+    background: black none;
+    color: white;
+}
+
+.portal-footer {
     height: 30px;
     display: flex;
     background-color: #373B50;
 }
 
-.footer-copyright {
+.portal-footer-copyright {
     width: 100%;
     font-size: 14px;
     color: white;
