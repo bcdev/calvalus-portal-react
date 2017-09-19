@@ -8,9 +8,23 @@ import 'brace/theme/solarized_dark';
 import 'brace/ext/language_tools';
 import 'brace/ext/searchbox';
 import {Button} from '@blueprintjs/core';
+import {connect, Dispatch} from 'react-redux';
+import {HttpCall, HttpCallMethod, State} from '../state';
+import {sendRequest} from '../actions';
 
-class App extends React.Component {
-    render() {
+interface AppProps {
+    dispatch: Dispatch<State>;
+    httpCalls: HttpCall[];
+}
+
+function mapStateToProps(state: State) {
+    return ({
+        httpCalls: state.communication.httpCalls
+    });
+}
+
+class App extends React.Component<AppProps, any> {
+    public render() {
         return (
             <div className="container">
                 <div className="header">Calvalus Portal</div>
@@ -27,11 +41,19 @@ class App extends React.Component {
                                 tabSize: 2
                             }}
                             defaultValue={'Please enter the XML request here'}
+                            value={this.props.httpCalls.length ?
+                                this.props.httpCalls[this.props.httpCalls.length - 1].response : 'no response'}
+                            width="100%"
+                            showPrintMargin={false}
 
                         />
                     </div>
                     <div className="submit-button-container">
-                        <Button iconName="pt-icon-play" className="pt-intent-primary">
+                        <Button
+                            iconName="pt-icon-play"
+                            className="pt-intent-primary"
+                            onClick={this.sendDummyRequest}
+                        >
                             Submit
                         </Button>
                     </div>
@@ -44,6 +66,12 @@ class App extends React.Component {
             </div>
         );
     }
+
+    private sendDummyRequest = () => {
+        this.props.dispatch(sendRequest(
+            HttpCallMethod.GET,
+            'http://www.brockmann-consult.de/bc-wps/wps/calvalus?Service=WPS&Request=GetCapabilities'));
+    }
 }
 
-export default App;
+export default connect(mapStateToProps)(App);
