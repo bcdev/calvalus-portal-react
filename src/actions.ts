@@ -9,7 +9,7 @@ function receiveHttpResponse(httpCall: HttpCall) {
     };
 }
 
-export function sendRequest(method: HttpCallMethod, url: string) {
+export function sendRequest(method: HttpCallMethod, url: string, authorization: string) {
     return (dispatch: Dispatch<State>, getState: Function) => {
         const id: number = resolveNewId(getState().communication.httpCalls);
         let httpCall: HttpCall = {
@@ -17,7 +17,12 @@ export function sendRequest(method: HttpCallMethod, url: string) {
             method: method,
             url: url
         };
-        fetch(url)
+        fetch(url, {
+            method: 'get',
+            headers: {
+                'Authorization': authorization
+            }
+        })
             .then((response: Response) => {
                 if (response.body) {
                     response.text()

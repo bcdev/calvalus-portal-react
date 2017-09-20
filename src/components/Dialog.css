@@ -1,0 +1,13 @@
+@import "../../node_modules/@blueprintjs/core/dist/blueprint.css";
+
+.pt-dialog-header {
+    background-color: #373B50;
+}
+
+.pt-dialog-header .pt-icon-large{
+    color: white;
+}
+
+.pt-dialog-close-button {
+    color: white;
+}

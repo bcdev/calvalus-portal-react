@@ -11,6 +11,7 @@ import {Button} from '@blueprintjs/core';
 import {connect, Dispatch} from 'react-redux';
 import {HttpCall, HttpCallMethod, State} from '../state';
 import {sendRequest} from '../actions';
+import UsernamePasswordDialog from './UsernamePasswordDialog';
 
 interface AppProps {
     dispatch: Dispatch<State>;
@@ -24,6 +25,16 @@ function mapStateToProps(state: State) {
 }
 
 class App extends React.Component<AppProps, any> {
+    private initialState = {
+        isUserPasswordDialogOpen: false,
+        username: '',
+        password: ''
+    };
+
+    public state = {
+        ...this.initialState
+    };
+
     public render() {
         return (
             <div className="container">
@@ -52,7 +63,7 @@ class App extends React.Component<AppProps, any> {
                         <Button
                             iconName="pt-icon-play"
                             className="pt-intent-primary"
-                            onClick={this.sendDummyRequest}
+                            onClick={this.openUserPasswordDialog}
                         >
                             Submit
                         </Button>
@@ -63,14 +74,48 @@ class App extends React.Component<AppProps, any> {
                         &#169;2017 Brockmann Consult GmbH
                     </div>
                 </div>
+                <UsernamePasswordDialog
+                    isOpen={this.state.isUserPasswordDialogOpen}
+                    username={this.state.username}
+                    password={this.state.password}
+                    closeDialog={this.closeUserPasswordDialog}
+                    submitCredentials={this.encodeCredentials}
+                    onUsernameChange={this.handleUsernameChange}
+                    onPasswordChange={this.handlePasswordChange}
+                />
             </div>
         );
     }
 
-    private sendDummyRequest = () => {
+    private handleUsernameChange = (newUsername: string) => {
+        this.setState({
+            username: newUsername
+        });
+    }
+
+    private handlePasswordChange = (newPassword: string) => {
+        this.setState({
+            password: newPassword
+        });
+    }
+
+    private encodeCredentials = () => {
+        const encodedCredentials = 'Basic ' + btoa(this.state.username + ':' + this.state.password);
         this.props.dispatch(sendRequest(
             HttpCallMethod.GET,
-            'http://www.brockmann-consult.de/bc-wps/wps/calvalus?Service=WPS&Request=GetCapabilities'));
+            'http://www.brockmann-consult.de/bc-wps/wps/calvalus?Service=WPS&Request=GetCapabilities',
+            encodedCredentials));
+        this.setState({...this.initialState});
+    }
+
+    private openUserPasswordDialog = () => {
+        this.setState({
+            isUserPasswordDialogOpen: true
+        });
+    }
+
+    private closeUserPasswordDialog = () => {
+        this.setState({...this.initialState});
     }
 }
 
