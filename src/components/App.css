@@ -7,6 +7,7 @@
     flex-direction: column;
     font-family: "Lato", "Helvetica Neue", Helvetica, Arial, sans-serif;
     max-width: none;
+    overflow-x: hidden;
 }
 
 .header {
@@ -18,7 +19,7 @@
 }
 
 .main {
-    height: calc(100% - 110px);
+    height: calc(100% - 80px);
     display: flex;
     flex-direction: column;
 }
@@ -31,9 +32,17 @@
     margin: 10px;
 }
 
+.response-container {
+    margin: 10px;
+}
+
 .pt-button.pt-intent-primary {
     background: #373B50 none;
     color: white;
+}
+
+.margin-right-10 {
+    margin-right: 10px;
 }
 
 .pt-button.pt-intent-primary:hover {
@@ -42,8 +51,8 @@
 }
 
 .portal-footer {
-    height: 30px;
     display: flex;
+    flex: 0 0 30px;
     background-color: #373B50;
 }
 

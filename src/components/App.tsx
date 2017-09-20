@@ -2,14 +2,15 @@ import * as React from 'react';
 import './App.css';
 
 import AceEditor from 'react-ace';
-import 'brace/mode/json';
-import 'brace/snippets/json';
+import 'brace/mode/xml';
+import 'brace/snippets/xml';
 import 'brace/theme/solarized_dark';
+import 'brace/theme/monokai';
 import 'brace/ext/language_tools';
 import 'brace/ext/searchbox';
 import {Button} from '@blueprintjs/core';
 import {connect, Dispatch} from 'react-redux';
-import {HttpCall, HttpCallMethod, State} from '../state';
+import {HttpCall, State} from '../state';
 import {sendRequest} from '../actions';
 import UsernamePasswordDialog from './UsernamePasswordDialog';
 
@@ -25,14 +26,16 @@ function mapStateToProps(state: State) {
 }
 
 class App extends React.Component<AppProps, any> {
-    private initialState = {
+    initialDialogState = {
         isUserPasswordDialogOpen: false,
         username: '',
         password: ''
     };
 
     public state = {
-        ...this.initialState
+        ...this.initialDialogState,
+        requestString: '',
+        callType: ''
     };
 
     public render() {
@@ -42,9 +45,9 @@ class App extends React.Component<AppProps, any> {
                 <div className="main">
                     <div className="code-editor">
                         <AceEditor
-                            mode="json"
+                            mode="xml"
                             theme="solarized_dark"
-                            name="UNIQUE_ID_OF_DIV"
+                            name="Request window"
                             editorProps={{$blockScrolling: true}}
                             showGutter={false}
                             setOptions={{
@@ -52,9 +55,8 @@ class App extends React.Component<AppProps, any> {
                                 tabSize: 2
                             }}
                             defaultValue={'Please enter the XML request here'}
-                            value={this.props.httpCalls.length ?
-                                this.props.httpCalls[this.props.httpCalls.length - 1].response : 'no response'}
-                            width="100%"
+                            value={this.state.requestString}
+                            width="1000px"
                             showPrintMargin={false}
 
                         />
@@ -62,24 +64,59 @@ class App extends React.Component<AppProps, any> {
                     <div className="submit-button-container">
                         <Button
                             iconName="pt-icon-play"
-                            className="pt-intent-primary"
-                            onClick={this.openUserPasswordDialog}
+                            className="pt-intent-primary margin-right-10"
+                            onClick={this.openUserPasswordDialog.bind(this, 'getCapabilities')}
                         >
-                            Submit
+                            GetCapabilities
+                        </Button>
+                        <Button
+                            iconName="pt-icon-play"
+                            className="pt-intent-primary margin-right-10"
+                            onClick={this.openUserPasswordDialog.bind(this, 'describeProcess')}
+                        >
+                            DescribeProcess
+                        </Button>
+                        <Button
+                            iconName="pt-icon-play"
+                            className="pt-intent-primary"
+                            onClick={this.openUserPasswordDialog.bind(this, 'execute')}
+                        >
+                            Execute
                         </Button>
                     </div>
-                </div>
-                <div className="portal-footer">
-                    <div className="portal-footer-copyright">
-                        &#169;2017 Brockmann Consult GmbH
+                    <div className="response-container">
+                        <AceEditor
+                            mode="xml"
+                            theme="monokai"
+                            name="Response window"
+                            editorProps={{$blockScrolling: true}}
+                            showGutter={false}
+                            setOptions={{
+                                enableBasicAutocompletion: true,
+                                tabSize: 2
+                            }}
+                            defaultValue={'Response XML will be displayed here'}
+                            value={this.props.httpCalls.length ?
+                                this.props.httpCalls[this.props.httpCalls.length - 1].response : 'no response'}
+                            width="1000px"
+                            showPrintMargin={false}
+                            readOnly={true}
+
+                        />
+                    </div>
+                    <div className="portal-footer">
+                        <div className="portal-footer-copyright">
+                            &#169;2017 Brockmann Consult GmbH
+                        </div>
                     </div>
                 </div>
+
                 <UsernamePasswordDialog
                     isOpen={this.state.isUserPasswordDialogOpen}
                     username={this.state.username}
                     password={this.state.password}
                     closeDialog={this.closeUserPasswordDialog}
-                    submitCredentials={this.encodeCredentials}
+                    submitCredentials={this.submitRequest}
                     onUsernameChange={this.handleUsernameChange}
                     onPasswordChange={this.handlePasswordChange}
                 />
@@ -99,23 +136,22 @@ class App extends React.Component<AppProps, any> {
         });
     }
 
-    private encodeCredentials = () => {
+    private submitRequest = () => {
         const encodedCredentials = 'Basic ' + btoa(this.state.username + ':' + this.state.password);
         this.props.dispatch(sendRequest(
-            HttpCallMethod.GET,
-            'http://www.brockmann-consult.de/bc-wps/wps/calvalus?Service=WPS&Request=GetCapabilities',
-            encodedCredentials));
-        this.setState({...this.initialState});
+            encodedCredentials, this.state.callType));
+        this.setState({...this.initialDialogState});
     }
 
-    private openUserPasswordDialog = () => {
+    private openUserPasswordDialog = (callType: string) => {
         this.setState({
-            isUserPasswordDialogOpen: true
+            isUserPasswordDialogOpen: true,
+            callType: callType
         });
     }
 
     private closeUserPasswordDialog = () => {
-        this.setState({...this.initialState});
+        this.setState({...this.initialDialogState});
     }
 }
 
