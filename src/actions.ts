@@ -9,7 +9,7 @@ function receiveHttpResponse(httpCall: HttpCall) {
     };
 }
 
-export function sendRequest(authorization: string, callType: string) {
+export function sendRequest(authorization: string, callType: string, requestBody?: string) {
     return (dispatch: Dispatch<State>, getState: Function) => {
         const id: number = resolveNewId(getState().communication.httpCalls);
         let method: HttpCallMethod;
@@ -22,7 +22,7 @@ export function sendRequest(authorization: string, callType: string) {
             case 'describeProcess':
                 method = HttpCallMethod.GET;
                 url = 'http://www.brockmann-consult.de/bc-wps/wps/calvalus?Service=WPS&Request=DescribeProcess&' +
-                    'Version=1.0.0&Identifier=all';
+                    'Version=1.0.0&Identifier=urbantep-subsetting~1.0~Subset';
                 break;
             case 'execute':
                 method = HttpCallMethod.POST;
@@ -37,25 +37,58 @@ export function sendRequest(authorization: string, callType: string) {
             method: method,
             url: url
         };
-        fetch(url, {
-            method: httpCall.method === HttpCallMethod.GET ? 'get' : 'post',
-            headers: {
-                'Authorization': authorization
+
+        if (httpCall.method === HttpCallMethod.GET) {
+            sendGetRequest(httpCall, authorization, dispatch);
+        } else if (httpCall.method === HttpCallMethod.POST && requestBody) {
+            sendPostRequest(httpCall, authorization, requestBody, dispatch);
+        }
+
+    };
+}
+
+function sendGetRequest(httpCall: HttpCall, authorization: string, dispatch: Dispatch<State>) {
+    fetch(httpCall.url, {
+        method: 'get',
+        headers: {
+            'Authorization': authorization
+        }
+    })
+        .then((response: Response) => {
+            if (response.body) {
+                response.text()
+                    .then((data) => {
+                        httpCall.response = data;
+                        dispatch(receiveHttpResponse(httpCall));
+                    });
             }
         })
-            .then((response: Response) => {
-                if (response.body) {
-                    response.text()
-                        .then((data) => {
-                            httpCall.response = data;
-                            dispatch(receiveHttpResponse(httpCall));
-                        });
-                }
-            })
-            .catch(errorResponse => {
-                throw(errorResponse);
-            });
-    };
+        .catch(errorResponse => {
+            throw(errorResponse);
+        });
+}
+
+function sendPostRequest(httpCall: HttpCall, authorization: string, requestBody: string, dispatch: Dispatch<State>) {
+    fetch(httpCall.url, {
+        method: 'post',
+        headers: {
+            'Authorization': authorization,
+            'Content-Type': 'application/xml'
+        },
+        body: requestBody
+    })
+        .then((response: Response) => {
+            if (response.body) {
+                response.text()
+                    .then((data) => {
+                        httpCall.response = data;
+                        dispatch(receiveHttpResponse(httpCall));
+                    });
+            }
+        })
+        .catch(errorResponse => {
+            throw(errorResponse);
+        });
 }
 
 function resolveNewId(calls: HttpCall[]): number {

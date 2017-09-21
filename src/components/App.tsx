@@ -58,6 +58,7 @@ class App extends React.Component<AppProps, any> {
                             value={this.state.requestString}
                             width="1000px"
                             showPrintMargin={false}
+                            onChange={this.handleRequestChange}
 
                         />
                     </div>
@@ -124,6 +125,12 @@ class App extends React.Component<AppProps, any> {
         );
     }
 
+    private handleRequestChange = (newRequest: string) => {
+        this.setState({
+            requestString: newRequest
+        });
+    }
+
     private handleUsernameChange = (newUsername: string) => {
         this.setState({
             username: newUsername
@@ -139,7 +146,7 @@ class App extends React.Component<AppProps, any> {
     private submitRequest = () => {
         const encodedCredentials = 'Basic ' + btoa(this.state.username + ':' + this.state.password);
         this.props.dispatch(sendRequest(
-            encodedCredentials, this.state.callType));
+            encodedCredentials, this.state.callType, this.state.requestString));
         this.setState({...this.initialDialogState});
     }
 
