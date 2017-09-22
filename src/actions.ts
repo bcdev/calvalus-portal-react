@@ -1,8 +1,10 @@
 import {Dispatch} from 'react-redux';
-import {HttpCall, HttpCallMethod, InputDataset, State} from './state';
+import {HttpCall, HttpCallMethod, HttpCallState, InputDataset, State} from './state';
+import {HttpCallFailure, HttpCallPromise, HttpStatusEnum} from './restapi/HttpCall';
 
 export const UPDATE_HTTP_RESPONSE = 'UPDATE_HTTP_RESPONSE';
 export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
+export const SET_CALL_STATE = 'SET_CALL_STATE';
 
 function receiveHttpResponse(httpCall: HttpCall) {
     return {
@@ -125,6 +127,59 @@ function sendPostRequest(httpCall: HttpCall, authorization: string, requestBody:
         .catch(errorResponse => {
             throw(errorResponse);
         });
+}
+
+export function setCallState(callState: HttpCallState) {
+    return {type: SET_CALL_STATE, payload: {callState: callState}};
+}
+
+function httpCallSent(httpCallId: number, callType: string) {
+    return setCallState({id: httpCallId, status: HttpStatusEnum.SENT, callType: callType});
+}
+
+function httpCallSuccessful(httpCallId: number) {
+    return setCallState({id: httpCallId, status: HttpStatusEnum.SUCCESSFUL});
+}
+
+function httpCallFailed(httpCallId: number, failure: HttpCallFailure) {
+    console.error(failure);
+    return setCallState({id: httpCallId, status, failure});
+}
+
+export type HttpCallPromiseFactory<T> = () => HttpCallPromise<T>;
+export type HttpCallPromiseAction<T> = (httpCallResponseData: T) => void;
+
+/**
+ * Call some (remote) API asynchronously.
+ *
+ * @param dispatch Redux' dispatch() function.
+ * @param callType A human-readable callType for the job that is being created
+ * @param call The API call which must produce a JobPromise
+ * @param action The action to be performed when the call succeeds.
+ * @param failureAction The action to be performed when the call fails.
+ */
+export function callAPI<T>(dispatch: Dispatch<State>,
+                           callType: string,
+                           call: HttpCallPromiseFactory<T>,
+                           action?: HttpCallPromiseAction<T>,
+                           failureAction?: HttpCallPromiseAction<HttpCallFailure>): void {
+
+    const httpCallPromise = call();
+    dispatch(httpCallSent(httpCallPromise.getHttpCallId(), callType));
+
+    const onDone = (httpCallResponseData: T) => {
+        dispatch(httpCallSuccessful(httpCallPromise.getHttpCallId()));
+        if (action) {
+            action(httpCallResponseData);
+        }
+    };
+    const onFailure = (httpCallFailure: HttpCallFailure) => {
+        dispatch(httpCallFailed(httpCallPromise.getHttpCallId(), httpCallFailure));
+        if (failureAction) {
+            failureAction(httpCallFailure);
+        }
+    };
+    httpCallPromise.then(onDone, onFailure);
 }
 
 function resolveNewId(calls: HttpCall[]): number {
