@@ -24,8 +24,23 @@
     flex-direction: column;
 }
 
-.code-editor {
+.input-dataset-container {
     margin: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 300px;
+}
+
+.input-dataset-title{
+    background-color: #373B50;
+    color: white;
+    font-size: 20px;
+    padding: 5px;
+}
+
+.input-dataset-list {
+    padding: 5px;
+    overflow-y: auto;
 }
 
 .submit-button-container {

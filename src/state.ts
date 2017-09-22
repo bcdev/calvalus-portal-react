@@ -7,6 +7,7 @@ export interface State {
 }
 
 export interface DataState {
+    inputDatasets: InputDataset[];
 }
 
 export interface CommunicationState {
@@ -20,6 +21,17 @@ export interface SessionState {
 }
 
 export interface LocationState {
+}
+
+export interface InputDataset {
+    productType: string;
+    name: string;
+    path: string;
+    minDate: string;
+    maxDate: string;
+    regionName: string;
+    bandNames: string[];
+    geoInventory: string;
 }
 
 export interface HttpCall {

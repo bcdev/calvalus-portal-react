@@ -11,8 +11,9 @@ import 'brace/ext/searchbox';
 import {Button} from '@blueprintjs/core';
 import {connect, Dispatch} from 'react-redux';
 import {HttpCall, State} from '../state';
-import {sendRequest} from '../actions';
+import {sendInputDatasetRequest, sendRequest} from '../actions';
 import UsernamePasswordDialog from './UsernamePasswordDialog';
+import InputDatasetPanel from './InputDatasetPanel';
 
 interface AppProps {
     dispatch: Dispatch<State>;
@@ -43,25 +44,7 @@ class App extends React.Component<AppProps, any> {
             <div className="container">
                 <div className="header">Calvalus Portal</div>
                 <div className="main">
-                    <div className="code-editor">
-                        <AceEditor
-                            mode="xml"
-                            theme="solarized_dark"
-                            name="Request window"
-                            editorProps={{$blockScrolling: true}}
-                            showGutter={false}
-                            setOptions={{
-                                enableBasicAutocompletion: true,
-                                tabSize: 2
-                            }}
-                            defaultValue={'Please enter the XML request here'}
-                            value={this.state.requestString}
-                            width="1000px"
-                            showPrintMargin={false}
-                            onChange={this.handleRequestChange}
-
-                        />
-                    </div>
+                    <InputDatasetPanel/>
                     <div className="submit-button-container">
                         <Button
                             iconName="pt-icon-play"
@@ -79,10 +62,17 @@ class App extends React.Component<AppProps, any> {
                         </Button>
                         <Button
                             iconName="pt-icon-play"
-                            className="pt-intent-primary"
+                            className="pt-intent-primary margin-right-10"
                             onClick={this.openUserPasswordDialog.bind(this, 'execute')}
                         >
                             Execute
+                        </Button>
+                        <Button
+                            iconName="pt-icon-play"
+                            className="pt-intent-primary"
+                            onClick={this.retrieveInputDatasets}
+                        >
+                            Input Dataset
                         </Button>
                     </div>
                     <div className="response-container">
@@ -125,10 +115,8 @@ class App extends React.Component<AppProps, any> {
         );
     }
 
-    private handleRequestChange = (newRequest: string) => {
-        this.setState({
-            requestString: newRequest
-        });
+    private retrieveInputDatasets = () => {
+        this.props.dispatch(sendInputDatasetRequest());
     }
 
     private handleUsernameChange = (newUsername: string) => {

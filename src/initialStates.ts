@@ -2,7 +2,9 @@ import {CommunicationState, ControlState, DataState, SessionState} from './state
 
 export const initialControlState: ControlState = {};
 
-export const initialDataState: DataState = {};
+export const initialDataState: DataState = {
+    inputDatasets: []
+};
 
 export const initialSessionState: SessionState = {};
 

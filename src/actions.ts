@@ -1,11 +1,30 @@
 import {Dispatch} from 'react-redux';
-import {HttpCall, HttpCallMethod, State} from './state';
+import {HttpCall, HttpCallMethod, InputDataset, State} from './state';
 
 export const UPDATE_HTTP_RESPONSE = 'UPDATE_HTTP_RESPONSE';
+export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
 
 function receiveHttpResponse(httpCall: HttpCall) {
     return {
         type: UPDATE_HTTP_RESPONSE, payload: httpCall
+    };
+}
+
+function updateInputDatasets(inputDatasets: InputDataset[]) {
+    return {
+        type: UPDATE_INPUT_DATASETS, payload: inputDatasets
+    };
+}
+
+export function sendInputDatasetRequest() {
+    return (dispatch: Dispatch<State>, getState: Function) => {
+        const id: number = resolveNewId(getState().communication.httpCalls);
+        let httpCall: HttpCall = {
+            id: id,
+            method: HttpCallMethod.GET,
+            url: 'http://urbantep-test:9080/calvalus-rest/input-dataset'
+        };
+        sendGetRequest2(httpCall, dispatch);
     };
 }
 
@@ -45,6 +64,23 @@ export function sendRequest(authorization: string, callType: string, requestBody
         }
 
     };
+}
+
+function sendGetRequest2(httpCall: HttpCall, dispatch: Dispatch<State>) {
+    fetch(httpCall.url, {
+        method: 'get'
+    })
+        .then((response: Response) => {
+            if (response.body) {
+                response.json()
+                    .then((data) => {
+                        dispatch(updateInputDatasets(data));
+                    });
+            }
+        })
+        .catch(errorResponse => {
+            throw(errorResponse);
+        });
 }
 
 function sendGetRequest(httpCall: HttpCall, authorization: string, dispatch: Dispatch<State>) {

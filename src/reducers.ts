@@ -10,6 +10,11 @@ interface Action {
 
 const dataReducer = (state: DataState = initialDataState, action: Action) => {
     switch (action.type) {
+        case actions.UPDATE_INPUT_DATASETS: {
+            return Object.assign({}, state, {
+                inputDatasets: action.payload
+            });
+        }
         default:
             return state;
     }
