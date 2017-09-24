@@ -1,10 +1,8 @@
 import {Dispatch} from 'react-redux';
-import {HttpCall, HttpCallMethod, HttpCallState, InputDataset, State} from './state';
-import {HttpCallFailure, HttpCallPromise, HttpStatusEnum} from './restapi/HttpCall';
+import {HttpCall, HttpCallMethod, InputDataset, State} from './state';
 
 export const UPDATE_HTTP_RESPONSE = 'UPDATE_HTTP_RESPONSE';
 export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
-export const SET_CALL_STATE = 'SET_CALL_STATE';
 
 function receiveHttpResponse(httpCall: HttpCall) {
     return {
@@ -26,7 +24,15 @@ export function sendInputDatasetRequest() {
             method: HttpCallMethod.GET,
             url: 'http://urbantep-test:9080/calvalus-rest/input-dataset'
         };
-        sendGetRequest2(httpCall, dispatch);
+        const action = (response: Response) => {
+            if (response.body) {
+                response.json()
+                    .then((data) => {
+                        dispatch(updateInputDatasets(data));
+                    });
+            }
+        };
+        sendHttpRequest(httpCall, action);
     };
 }
 
@@ -35,6 +41,9 @@ export function sendRequest(authorization: string, callType: string, requestBody
         const id: number = resolveNewId(getState().communication.httpCalls);
         let method: HttpCallMethod;
         let url: string = '';
+        let headers = {
+            'Authorization': authorization
+        };
         switch (callType) {
             case 'getCapabilities':
                 method = HttpCallMethod.GET;
@@ -48,6 +57,9 @@ export function sendRequest(authorization: string, callType: string, requestBody
             case 'execute':
                 method = HttpCallMethod.POST;
                 url = 'http://www.brockmann-consult.de/bc-wps/wps/calvalus';
+                headers = Object.assign({}, headers, {
+                    'Content-Type': 'application/xml'
+                });
                 break;
             default:
                 method = HttpCallMethod.GET;
@@ -56,130 +68,71 @@ export function sendRequest(authorization: string, callType: string, requestBody
         let httpCall: HttpCall = {
             id: id,
             method: method,
-            url: url
+            url: url,
+            headers: headers
+        };
+
+        const action = (response: Response) => {
+            if (response.body) {
+                response.text()
+                    .then((data) => {
+                        httpCall.response = data;
+                        dispatch(receiveHttpResponse(httpCall));
+                    });
+            }
         };
 
         if (httpCall.method === HttpCallMethod.GET) {
-            sendGetRequest(httpCall, authorization, dispatch);
-        } else if (httpCall.method === HttpCallMethod.POST && requestBody) {
-            sendPostRequest(httpCall, authorization, requestBody, dispatch);
+            sendHttpRequest(httpCall, action);
+        } else if (httpCall.method === HttpCallMethod.POST) {
+            httpCall = Object.assign({}, httpCall, {
+                requestBody: requestBody
+            });
+            sendHttpRequest(httpCall, action);
         }
 
     };
 }
 
-function sendGetRequest2(httpCall: HttpCall, dispatch: Dispatch<State>) {
-    fetch(httpCall.url, {
-        method: 'get'
-    })
-        .then((response: Response) => {
-            if (response.body) {
-                response.json()
-                    .then((data) => {
-                        dispatch(updateInputDatasets(data));
-                    });
-            }
-        })
-        .catch(errorResponse => {
-            throw(errorResponse);
+function doHttpCall(httpCall: HttpCall): Promise<Response> {
+    let configuration = {
+        method: httpCall.method === HttpCallMethod.GET ? 'get' : 'post'
+    };
+    if (httpCall.headers) {
+        configuration = Object.assign({}, configuration, {
+            headers: {...httpCall.headers}
         });
-}
-
-function sendGetRequest(httpCall: HttpCall, authorization: string, dispatch: Dispatch<State>) {
-    fetch(httpCall.url, {
-        method: 'get',
-        headers: {
-            'Authorization': authorization
-        }
-    })
-        .then((response: Response) => {
-            if (response.body) {
-                response.text()
-                    .then((data) => {
-                        httpCall.response = data;
-                        dispatch(receiveHttpResponse(httpCall));
-                    });
-            }
-        })
-        .catch(errorResponse => {
-            throw(errorResponse);
+    }
+    if (httpCall.method === HttpCallMethod.POST && httpCall.requestBody) {
+        configuration = Object.assign({}, configuration, {
+            body: httpCall.requestBody
         });
+    }
+    return fetch(httpCall.url, {...configuration});
 }
 
-function sendPostRequest(httpCall: HttpCall, authorization: string, requestBody: string, dispatch: Dispatch<State>) {
-    fetch(httpCall.url, {
-        method: 'post',
-        headers: {
-            'Authorization': authorization,
-            'Content-Type': 'application/xml'
-        },
-        body: requestBody
-    })
-        .then((response: Response) => {
-            if (response.body) {
-                response.text()
-                    .then((data) => {
-                        httpCall.response = data;
-                        dispatch(receiveHttpResponse(httpCall));
-                    });
-            }
-        })
-        .catch(errorResponse => {
-            throw(errorResponse);
-        });
+function onSuccessful(processResponse: (response: Response) => void) {
+    return (response: Response) => {
+        processResponse(response);
+    };
 }
 
-export function setCallState(callState: HttpCallState) {
-    return {type: SET_CALL_STATE, payload: {callState: callState}};
-}
-
-function httpCallSent(httpCallId: number, callType: string) {
-    return setCallState({id: httpCallId, status: HttpStatusEnum.SENT, callType: callType});
-}
-
-function httpCallSuccessful(httpCallId: number) {
-    return setCallState({id: httpCallId, status: HttpStatusEnum.SUCCESSFUL});
-}
-
-function httpCallFailed(httpCallId: number, failure: HttpCallFailure) {
-    console.error(failure);
-    return setCallState({id: httpCallId, status, failure});
-}
-
-export type HttpCallPromiseFactory<T> = () => HttpCallPromise<T>;
-export type HttpCallPromiseAction<T> = (httpCallResponseData: T) => void;
-
-/**
- * Call some (remote) API asynchronously.
- *
- * @param dispatch Redux' dispatch() function.
- * @param callType A human-readable callType for the job that is being created
- * @param call The API call which must produce a JobPromise
- * @param action The action to be performed when the call succeeds.
- * @param failureAction The action to be performed when the call fails.
- */
-export function callAPI<T>(dispatch: Dispatch<State>,
-                           callType: string,
-                           call: HttpCallPromiseFactory<T>,
-                           action?: HttpCallPromiseAction<T>,
-                           failureAction?: HttpCallPromiseAction<HttpCallFailure>): void {
-
-    const httpCallPromise = call();
-    dispatch(httpCallSent(httpCallPromise.getHttpCallId(), callType));
-
-    const onDone = (httpCallResponseData: T) => {
-        dispatch(httpCallSuccessful(httpCallPromise.getHttpCallId()));
-        if (action) {
-            action(httpCallResponseData);
+function onFailed(failedAction?: (errorResponse: Response) => void) {
+    return (response: Response) => {
+        if (failedAction) {
+            failedAction(response);
+        } else {
+            throw(response);
         }
     };
-    const onFailure = (httpCallFailure: HttpCallFailure) => {
-        dispatch(httpCallFailed(httpCallPromise.getHttpCallId(), httpCallFailure));
-        if (failureAction) {
-            failureAction(httpCallFailure);
-        }
-    };
-    httpCallPromise.then(onDone, onFailure);
+}
+
+function sendHttpRequest(httpCall: HttpCall,
+                         nextAction: (response: Response) => void,
+                         errorAction?: (response: Response) => void) {
+    doHttpCall(httpCall)
+        .then(onSuccessful(nextAction))
+        .catch(onFailed(errorAction));
 }
 
 function resolveNewId(calls: HttpCall[]): number {

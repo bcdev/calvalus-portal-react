@@ -1,5 +1,3 @@
-import {HttpCallFailure} from './restapi/HttpCall';
-
 export interface State {
     data: DataState;
     communication: CommunicationState;
@@ -40,9 +38,14 @@ export interface HttpCall {
     id: number;
     method: HttpCallMethod;
     url: string;
+    headers?: HttpHeader;
     requestBody?: string;
     response?: string;
     status?: HttpCallStatus;
+}
+
+export interface HttpHeader {
+    [key: string]: string;
 }
 
 export enum HttpCallMethod {
@@ -54,11 +57,4 @@ export enum HttpCallStatus {
     SENT,
     SUCCESSFUL,
     ERROR
-}
-
-export interface HttpCallState {
-    id: number;
-    status: string;
-    failure?: HttpCallFailure;
-    callType?: string;
 }
