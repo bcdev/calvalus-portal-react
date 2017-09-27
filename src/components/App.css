@@ -31,16 +31,25 @@
     flex: 0 0 300px;
 }
 
-.input-dataset-title{
+.input-dataset-title {
     background-color: #373B50;
     color: white;
     font-size: 20px;
     padding: 5px;
 }
 
-.input-dataset-list {
-    padding: 5px;
+.input-dataset-list-container {
     overflow-y: auto;
+    display: flex;
+}
+
+.input-dataset-list {
+    width: 50%;
+}
+
+.input-dataset-info {
+    width: 50%;
+    padding: 10px;
 }
 
 .submit-button-container {

@@ -15,6 +15,7 @@ export interface CommunicationState {
 }
 
 export interface ControlState {
+    selectedInputDataset: number | null;
 }
 
 export interface SessionState {

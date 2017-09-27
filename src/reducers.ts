@@ -22,6 +22,11 @@ const dataReducer = (state: DataState = initialDataState, action: Action) => {
 
 const controlReducer = (state: ControlState = initialControlState, action: Action) => {
     switch (action.type) {
+        case actions.UPDATE_INPUT_DATASET_SELECTION: {
+            return Object.assign({}, state, {
+                selectedInputDataset: action.payload
+            });
+        }
         default:
             return state;
     }

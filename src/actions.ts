@@ -6,6 +6,8 @@ export const UPDATE_HTTP_CALL_RESPONSE = 'UPDATE_HTTP_CALL_RESPONSE';
 export const UPDATE_HTTP_CALL_STATUS = 'UPDATE_HTTP_CALL_STATUS';
 export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
 
+export const UPDATE_INPUT_DATASET_SELECTION = 'UPDATE_INPUT_DATASET_SELECTION';
+
 function addNewHttpCall(httpCall: HttpCall) {
     return {type: ADD_NEW_HTTP_CALL, payload: httpCall};
 }
@@ -30,6 +32,10 @@ function updateHttpCallStatus(callId: number, newStatus: HttpCallStatus) {
 
 function updateInputDatasets(inputDatasets: InputDataset[]) {
     return {type: UPDATE_INPUT_DATASETS, payload: inputDatasets};
+}
+
+export function updateInputDatasetSelection(datasetIndex: number | null) {
+    return {type: UPDATE_INPUT_DATASET_SELECTION, payload: datasetIndex};
 }
 
 export function sendInputDatasetRequest() {
