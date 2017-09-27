@@ -11,7 +11,7 @@ import 'brace/ext/searchbox';
 import {Button} from '@blueprintjs/core';
 import {connect, Dispatch} from 'react-redux';
 import {HttpCall, State} from '../state';
-import {sendInputDatasetRequest, sendRequest} from '../actions';
+import {sendInputDatasetRequest, sendWpsRequest} from '../actions';
 import UsernamePasswordDialog from './UsernamePasswordDialog';
 import InputDatasetPanel from './InputDatasetPanel';
 
@@ -133,7 +133,7 @@ class App extends React.Component<AppProps, any> {
 
     private submitRequest = () => {
         const encodedCredentials = 'Basic ' + btoa(this.state.username + ':' + this.state.password);
-        this.props.dispatch(sendRequest(
+        this.props.dispatch(sendWpsRequest(
             encodedCredentials, this.state.callType, this.state.requestString));
         this.setState({...this.initialDialogState});
     }

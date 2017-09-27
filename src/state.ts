@@ -56,5 +56,6 @@ export enum HttpCallMethod {
 export enum HttpCallStatus {
     SENT,
     SUCCESSFUL,
+    FAILED,
     ERROR
 }

@@ -1,19 +1,35 @@
 import {Dispatch} from 'react-redux';
-import {HttpCall, HttpCallMethod, InputDataset, State} from './state';
+import {HttpCall, HttpCallMethod, HttpCallStatus, InputDataset, State} from './state';
 
-export const UPDATE_HTTP_RESPONSE = 'UPDATE_HTTP_RESPONSE';
+export const ADD_NEW_HTTP_CALL = 'ADD_NEW_HTTP_CALL';
+export const UPDATE_HTTP_CALL_RESPONSE = 'UPDATE_HTTP_CALL_RESPONSE';
+export const UPDATE_HTTP_CALL_STATUS = 'UPDATE_HTTP_CALL_STATUS';
 export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
 
-function receiveHttpResponse(httpCall: HttpCall) {
+function addNewHttpCall(httpCall: HttpCall) {
+    return {type: ADD_NEW_HTTP_CALL, payload: httpCall};
+}
+
+function updateHttpCallResponse(callId: number, response: string) {
     return {
-        type: UPDATE_HTTP_RESPONSE, payload: httpCall
+        type: UPDATE_HTTP_CALL_RESPONSE, payload: {
+            callId: callId,
+            response: response
+        }
+    };
+}
+
+function updateHttpCallStatus(callId: number, newStatus: HttpCallStatus) {
+    return {
+        type: UPDATE_HTTP_CALL_STATUS, payload: {
+            callId: callId,
+            status: newStatus
+        }
     };
 }
 
 function updateInputDatasets(inputDatasets: InputDataset[]) {
-    return {
-        type: UPDATE_INPUT_DATASETS, payload: inputDatasets
-    };
+    return {type: UPDATE_INPUT_DATASETS, payload: inputDatasets};
 }
 
 export function sendInputDatasetRequest() {
@@ -24,19 +40,34 @@ export function sendInputDatasetRequest() {
             method: HttpCallMethod.GET,
             url: 'http://urbantep-test:9080/calvalus-rest/input-dataset'
         };
-        const action = (response: Response) => {
+        const successfulAction = (response: Response) => {
             if (response.body) {
+                const clonedResponse = response.clone();
                 response.json()
                     .then((data) => {
                         dispatch(updateInputDatasets(data));
                     });
+                clonedResponse.text()
+                    .then((data) => {
+                        dispatch(updateHttpCallResponse(id, data));
+                    });
+                if (response.status === 200) {
+                    dispatch(updateHttpCallStatus(id, HttpCallStatus.SUCCESSFUL));
+                } else {
+                    dispatch(updateHttpCallStatus(id, HttpCallStatus.FAILED));
+                }
             }
         };
-        sendHttpRequest(httpCall, action);
+        const failedAction = () => {
+            dispatch(updateHttpCallStatus(id, HttpCallStatus.ERROR));
+        };
+        sendHttpRequest(httpCall, successfulAction, failedAction);
+        httpCall = Object.assign({}, httpCall, {status: HttpCallStatus.SENT});
+        dispatch(addNewHttpCall(httpCall));
     };
 }
 
-export function sendRequest(authorization: string, callType: string, requestBody?: string) {
+export function sendWpsRequest(authorization: string, callType: string, requestBody?: string) {
     return (dispatch: Dispatch<State>, getState: Function) => {
         const id: number = resolveNewId(getState().communication.httpCalls);
         let method: HttpCallMethod;
@@ -72,25 +103,31 @@ export function sendRequest(authorization: string, callType: string, requestBody
             headers: headers
         };
 
-        const action = (response: Response) => {
+        const successfulAction = (response: Response) => {
             if (response.body) {
                 response.text()
                     .then((data) => {
-                        httpCall.response = data;
-                        dispatch(receiveHttpResponse(httpCall));
+                        dispatch(updateHttpCallResponse(id, data));
                     });
+                if (response.status === 200) {
+                    dispatch(updateHttpCallStatus(id, HttpCallStatus.SUCCESSFUL));
+                } else {
+                    dispatch(updateHttpCallStatus(id, HttpCallStatus.FAILED));
+                }
             }
         };
 
-        if (httpCall.method === HttpCallMethod.GET) {
-            sendHttpRequest(httpCall, action);
-        } else if (httpCall.method === HttpCallMethod.POST) {
+        const failedAction = () => {
+            dispatch(updateHttpCallStatus(id, HttpCallStatus.ERROR));
+        };
+
+        if (httpCall.method === HttpCallMethod.POST && requestBody) {
             httpCall = Object.assign({}, httpCall, {
                 requestBody: requestBody
             });
-            sendHttpRequest(httpCall, action);
         }
-
+        sendHttpRequest(httpCall, successfulAction, failedAction);
+        dispatch(addNewHttpCall(httpCall));
     };
 }
 

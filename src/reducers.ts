@@ -36,20 +36,38 @@ const sessionReducer = (state: SessionState = initialSessionState, action: Actio
 
 const communicationReducer = (state: CommunicationState = initialCommunicationState, action: Action) => {
     switch (action.type) {
-        case actions.UPDATE_HTTP_RESPONSE: {
-            const callIndex = state.httpCalls.findIndex((x) => x.id === action.payload.id);
-            if (callIndex < 0) {
-                return Object.assign({}, state, {
-                    httpCalls: [
-                        ...state.httpCalls,
-                        action.payload
-                    ]
-                });
-            }
+        case actions.ADD_NEW_HTTP_CALL: {
+            return Object.assign({}, state, {
+                httpCalls: [
+                    ...state.httpCalls,
+                    action.payload
+                ]
+            });
+        }
+        case actions.UPDATE_HTTP_CALL_RESPONSE: {
+            const callIndex = state.httpCalls.findIndex((x) => x.id === action.payload.callId);
+            const selectedHttpCall = state.httpCalls[callIndex];
+            const updatedHttpCall = Object.assign({}, selectedHttpCall, {
+                response: action.payload.response
+            });
             return Object.assign({}, state, {
                 httpCalls: [
                     ...state.httpCalls.slice(0, callIndex),
-                    action.payload,
+                    updatedHttpCall,
+                    ...state.httpCalls.slice(callIndex + 1)
+                ]
+            });
+        }
+        case actions.UPDATE_HTTP_CALL_STATUS: {
+            const callIndex = state.httpCalls.findIndex((x) => x.id === action.payload.callId);
+            const selectedHttpCall = state.httpCalls[callIndex];
+            const updatedHttpCall = Object.assign({}, selectedHttpCall, {
+                status: action.payload.status
+            });
+            return Object.assign({}, state, {
+                httpCalls: [
+                    ...state.httpCalls.slice(0, callIndex),
+                    updatedHttpCall,
                     ...state.httpCalls.slice(callIndex + 1)
                 ]
             });

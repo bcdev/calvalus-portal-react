@@ -33,7 +33,12 @@ class InputDatasetPanel extends React.Component<InputDatasetPanelProps, any> {
         } else {
             return (
                 <div className="input-dataset-container">
-                    No available datasets
+                    <div className="input-dataset-title">
+                        Input Dataset
+                    </div>
+                    <div className="input-dataset-list">
+                        No available datasets
+                    </div>
                 </div>
             );
         }
