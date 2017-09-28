@@ -39,17 +39,40 @@
 }
 
 .input-dataset-list-container {
-    overflow-y: auto;
     display: flex;
 }
 
 .input-dataset-list {
+    overflow-y: auto;
     width: 50%;
 }
 
 .input-dataset-info {
     width: 50%;
+    margin: 10px 0 5px 10px;
     padding: 10px;
+    background-color: #373B50;
+    color: #7ac6cf;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-dataset-info-line {
+    display: flex;
+}
+
+.input-dataset-info-title {
+    flex: 0 0 100px;
+    font-weight: 700;
+}
+
+.input-dataset-info-content {
+    padding: 0 0 0 10px;
+    color: white;
+}
+
+.input-dataset-info-empty {
+    color: white;
 }
 
 .submit-button-container {

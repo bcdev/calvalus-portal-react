@@ -45,7 +45,7 @@ class InputDatasetPanel extends React.Component<InputDatasetPanelProps, any> {
                             />
                         </div>
                         <div className="input-dataset-info">
-                            test
+                            {this.renderInputDatasetInfo()}
                         </div>
                     </div>
                 </div>
@@ -62,6 +62,62 @@ class InputDatasetPanel extends React.Component<InputDatasetPanelProps, any> {
                 </div>
             );
         }
+    }
+
+    private renderInputDatasetInfo() {
+        let selectedDataset: InputDataset = this.props.inputDatasets[this.props.selectedDatasetIndex[0]];
+        let items: Array<JSX.Element> = [];
+        const datasetLineClassName = 'input-dataset-info-line';
+        const datasetInfoTitleClassName = 'input-dataset-info-title';
+        const datasetInfoContentClassName = 'input-dataset-info-content';
+        if (selectedDataset) {
+            items.push(
+                <span
+                    key="type"
+                    className={datasetLineClassName}
+                >
+                    <span className={datasetInfoTitleClassName}>Type</span> : 
+                    <span className={datasetInfoContentClassName}>{selectedDataset.productType}</span>
+                </span>);
+            items.push(
+                <span
+                    key="minDate"
+                    className={datasetLineClassName}
+                >
+                    <span className={datasetInfoTitleClassName}>Start Date</span> : 
+                    <span className={datasetInfoContentClassName}>{selectedDataset.minDate}</span>
+                </span>);
+            items.push(
+                <span
+                    key="maxDate"
+                    className={datasetLineClassName}
+                >
+                    <span className={datasetInfoTitleClassName}>End Date</span> : 
+                    <span className={datasetInfoContentClassName}>{selectedDataset.maxDate}</span>
+                </span>);
+            items.push(
+                <span
+                    key="regionName"
+                    className={datasetLineClassName}
+                >
+                    <span className={datasetInfoTitleClassName}>Region name</span> : 
+                    <span className={datasetInfoContentClassName}>{selectedDataset.regionName}</span>
+                </span>);
+            items.push(
+                <span
+                    key="geoInventory"
+                    className={datasetLineClassName}
+                >
+                    <span className={datasetInfoTitleClassName}>Geo Inventory</span> :
+                    <span className={datasetInfoContentClassName}>{selectedDataset.geoInventory ? ' Yes' : ' No'}</span>
+                </span>);
+        } else {
+            items.push(
+                <span key="noDataset" className="input-dataset-info-empty">
+                Please select an input dataset
+            </span>);
+        }
+        return items;
     }
 
     private handleSelectInputDataset = (oldSelection: Array<React.Key> | undefined, newSelection: Array<React.Key>) => {
