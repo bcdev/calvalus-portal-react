@@ -75,6 +75,15 @@
     color: white;
 }
 
+.input-dataset-list::-webkit-scrollbar {
+    background-color: #373b50;
+    width: 12px;
+}
+
+.input-dataset-list::-webkit-scrollbar-thumb {
+    background-color: #7ac6cf;
+}
+
 .submit-button-container {
     margin: 10px;
 }

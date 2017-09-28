@@ -10,25 +10,32 @@ import 'brace/ext/language_tools';
 import 'brace/ext/searchbox';
 import {Button} from '@blueprintjs/core';
 import {connect, Dispatch} from 'react-redux';
-import {HttpCall, State} from '../state';
+import {HttpCall, InputDataset, State} from '../state';
 import {sendInputDatasetRequest, sendWpsRequest} from '../actions';
 import UsernamePasswordDialog from './UsernamePasswordDialog';
 import InputDatasetPanel from './InputDatasetPanel';
+import WarningDialog from './WarningDialog';
+import {getExecuteRequest} from '../template/wpsRequest';
 
 interface AppProps {
     dispatch: Dispatch<State>;
     httpCalls: HttpCall[];
+    inputDatasets: InputDataset[];
+    selectedDatasetIndex: number[];
 }
 
 function mapStateToProps(state: State) {
     return ({
-        httpCalls: state.communication.httpCalls
+        httpCalls: state.communication.httpCalls,
+        inputDatasets: state.data.inputDatasets,
+        selectedDatasetIndex: [state.control.selectedInputDataset]
     });
 }
 
 class App extends React.Component<AppProps, any> {
     initialDialogState = {
         isUserPasswordDialogOpen: false,
+        isDatasetNotSelectedDialogOpen: false,
         username: '',
         password: ''
     };
@@ -49,6 +56,13 @@ class App extends React.Component<AppProps, any> {
                         <Button
                             iconName="pt-icon-play"
                             className="pt-intent-primary margin-right-10"
+                            onClick={this.retrieveInputDatasets}
+                        >
+                            Input Dataset
+                        </Button>
+                        <Button
+                            iconName="pt-icon-play"
+                            className="pt-intent-primary margin-right-10"
                             onClick={this.openUserPasswordDialog.bind(this, 'getCapabilities')}
                         >
                             GetCapabilities
@@ -62,17 +76,10 @@ class App extends React.Component<AppProps, any> {
                         </Button>
                         <Button
                             iconName="pt-icon-play"
-                            className="pt-intent-primary margin-right-10"
-                            onClick={this.openUserPasswordDialog.bind(this, 'execute')}
+                            className="pt-intent-primary"
+                            onClick={this.handleExecuteCall}
                         >
                             Execute
-                        </Button>
-                        <Button
-                            iconName="pt-icon-play"
-                            className="pt-intent-primary"
-                            onClick={this.retrieveInputDatasets}
-                        >
-                            Input Dataset
                         </Button>
                     </div>
                     <div className="response-container">
@@ -111,6 +118,12 @@ class App extends React.Component<AppProps, any> {
                     onUsernameChange={this.handleUsernameChange}
                     onPasswordChange={this.handlePasswordChange}
                 />
+                <WarningDialog
+                    isOpen={this.state.isDatasetNotSelectedDialogOpen}
+                    title="Missing input dataset"
+                    message="Please select an input dataset."
+                    closeDialog={this.closeDatasetNotSelectedDialog}
+                />
             </div>
         );
     }
@@ -134,8 +147,31 @@ class App extends React.Component<AppProps, any> {
     private submitRequest = () => {
         const encodedCredentials = 'Basic ' + btoa(this.state.username + ':' + this.state.password);
         this.props.dispatch(sendWpsRequest(
-            encodedCredentials, this.state.callType, this.state.requestString));
+            encodedCredentials,
+            this.state.callType,
+            getExecuteRequest(this.props.inputDatasets[this.props.selectedDatasetIndex[0]].name)));
         this.setState({...this.initialDialogState});
+    }
+
+    private handleExecuteCall = () => {
+        if (!this.props.selectedDatasetIndex.length ||
+            (!this.props.selectedDatasetIndex[0] && this.props.selectedDatasetIndex[0] !== 0)) {
+            this.openDatasetNotSelectedDialog();
+        } else {
+            this.openUserPasswordDialog('execute');
+        }
+    }
+
+    private openDatasetNotSelectedDialog = () => {
+        this.setState({
+            isDatasetNotSelectedDialogOpen: true
+        });
+    }
+
+    private closeDatasetNotSelectedDialog = () => {
+        this.setState({
+            isDatasetNotSelectedDialogOpen: false
+        });
     }
 
     private openUserPasswordDialog = (callType: string) => {

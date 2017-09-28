@@ -33,7 +33,7 @@ class InputDatasetPanel extends React.Component<InputDatasetPanelProps, any> {
                                 onSelection={this.handleSelectInputDataset}
                                 selection={this.props.selectedDatasetIndex}
                                 selectionMode={ListBoxSelectionMode.SINGLE}
-                                style={{border: '2px solid #373B50'}}
+                                style={{border: 'none', margin: '10px 10px 10px 0'}}
                                 itemStyle={{
                                     cursor: 'pointer',
                                     color: '#373B50',
