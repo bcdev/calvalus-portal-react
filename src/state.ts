@@ -16,6 +16,7 @@ export interface CommunicationState {
 
 export interface ControlState {
     selectedInputDataset: number | null;
+    selectedRegionWkt: string;
 }
 
 export interface SessionState {

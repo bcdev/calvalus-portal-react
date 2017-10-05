@@ -27,6 +27,11 @@ const controlReducer = (state: ControlState = initialControlState, action: Actio
                 selectedInputDataset: action.payload
             });
         }
+        case actions.UPDATE_REGION_WKT_SELECTION: {
+            return Object.assign({}, state, {
+                selectedRegionWkt: action.payload
+            });
+        }
         default:
             return state;
     }

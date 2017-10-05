@@ -1,7 +1,8 @@
 import {CommunicationState, ControlState, DataState, SessionState} from './state';
 
 export const initialControlState: ControlState = {
-    selectedInputDataset: null
+    selectedInputDataset: null,
+    selectedRegionWkt: ''
 };
 
 export const initialDataState: DataState = {

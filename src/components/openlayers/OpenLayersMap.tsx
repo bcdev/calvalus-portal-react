@@ -35,6 +35,7 @@ export interface OpenLayersMapProps extends ExternalObjectComponentProps<ol.Map,
     projectionCode?: string;
     onMapMounted?: (id: string, map: ol.Map) => void;
     onMapUnmounted?: (id: string, map: ol.Map) => void;
+    onSelectRegion: (selectedRegion: string) => void;
 }
 
 interface OpenLayersState {
@@ -82,13 +83,11 @@ export class OpenLayersMap extends ExternalObjectComponent<ol.Map, OpenLayersSta
                         key: 'AnCcpOxnAAgq-KyFcczSZYZ_iFvCOmWl0Mx-6QzQ_rzMtpgxZrPZZNxa8_9ZNXci',
                         imagerySet: 'AerialWithLabels',
                         reprojectionErrorThreshold: 0.5,
-                    }),
-                }),
-                this.createEmptyVectorLayer(),
+                    })
+                })
             ],
             view: new ol.View({
-                projection: this.props.projectionCode || 'EPSG:2163',
-                // projection: 'Glaciers_CCI_Greenland',
+                projection: this.props.projectionCode || 'EPSG:4326',
                 center: [13, 42],
                 zoom: 6,
 
@@ -101,12 +100,8 @@ export class OpenLayersMap extends ExternalObjectComponent<ol.Map, OpenLayersSta
         };
         // noinspection UnnecessaryLocalVariableJS
         const map = new ol.Map(options);
-        // map.addControl(new ol.control.ZoomSlider());
-        // map.addControl(new ol.control.ScaleLine());
-        // map.addControl(new ol.control.OverviewMap());
-        // map.addControl(new ol.control.MousePosition());
-        // map.addControl(new ol.control.Attribution());
-        // map.addControl(new ol.control.Zoom());
+
+        this.addDrawingLayer(map);
 
         return map;
     }
@@ -137,6 +132,99 @@ export class OpenLayersMap extends ExternalObjectComponent<ol.Map, OpenLayersSta
         if (this.props.onMapUnmounted) {
             this.props.onMapUnmounted(this.props.id, map);
         }
+    }
+
+    private addDrawingLayer(map: ol.Map) {
+        /* Add drawing vector source */
+        let drawingSource = new ol.source.Vector({
+            useSpatialIndex: false
+        });
+
+        /* Add drawing layer */
+        let drawingLayer = new ol.layer.Vector({
+            source: drawingSource
+        });
+        map.addLayer(drawingLayer);
+
+        let draw = new ol.interaction.Draw({
+            source: drawingSource,
+            type: 'Polygon',
+            // only draw when Ctrl is pressed.
+            condition: ol.events.condition.platformModifierKeyOnly
+        });
+        map.addInteraction(draw);
+
+        /* add ol.collection to hold all selected features */
+        let select = new ol.interaction.Select();
+        map.addInteraction(select);
+        let selectedFeatures = select.getFeatures();
+
+        selectedFeatures.on('add', (event: any) => {
+            let coordinates = event.target.item(0).getGeometry().getCoordinates();
+            let polygonString: string = 'POLYGON((';
+            for (let coordinate of coordinates[0]) {
+                polygonString = polygonString.concat(coordinate[0]).concat(' ').concat(coordinate[1]).concat(',');
+            }
+            polygonString = polygonString.concat('))');
+            this.props.onSelectRegion(polygonString);
+        });
+
+        selectedFeatures.on('remove', () => {
+            this.props.onSelectRegion('');
+        });
+
+        let sketch;
+
+        /* Deactivate select and delete any existing polygons.
+            Only one polygon drawn at a time. */
+        draw.on(
+            'drawstart', () => {
+                drawingSource.clear();
+                select.setActive(false);
+            },
+            this);
+
+        /* Reactivate select after 300ms (to avoid single click trigger)
+            and create final set of selected features. */
+        draw.on('drawend', () => {
+            sketch = null;
+            setTimeout(
+                () => {
+                    select.setActive(true);
+                },
+                300);
+            selectedFeatures.clear();
+        });
+
+        /* Modify polygons interaction */
+
+        let modify = new ol.interaction.Modify({
+            // only allow modification of drawn polygons
+            features: drawingSource.getFeaturesCollection()
+        });
+        map.addInteraction(modify);
+
+        /* Point features select/deselect as you move polygon.
+            Deactivate select interaction. */
+        modify.on(
+            'modifystart', (event: any) => {
+                sketch = event.features;
+                select.setActive(false);
+            },
+            this);
+
+        /* Reactivate select function */
+        modify.on(
+            'modifyend', () => {
+                sketch = null;
+                setTimeout(
+                    () => {
+                        select.setActive(true);
+                    },
+                    300);
+                selectedFeatures.clear();
+            },
+            this);
     }
 
     private updateMapLayers(map: ol.Map, currentLayers: LayerDescriptor[], nextLayers: LayerDescriptor[]) {
@@ -238,41 +326,5 @@ export class OpenLayersMap extends ExternalObjectComponent<ol.Map, OpenLayersSta
         if (this.props.debug) {
             console.log(`OpenLayersMap: removed layer #${layerIndex}`);
         }
-    }
-
-    /**
-     * Creates an empty Vector layer that demonstrates using a custom loading strategy and loader.
-     * This will be the basis for creating our own Vector pyramid for faster display of large Shapefiles.
-     *
-     * Note that "resolution" is given in map units per display pixel.
-     */
-    private createEmptyVectorLayer() {
-        function loader(extend: ol.Extent, resolution: number, projection: ol.proj.Projection) {
-            console.log(
-                'OpenLayersMap: loader: extend =', extend, ', resolution (deg/pix) =',
-                resolution, ', projection =', projection);
-        }
-
-        function strategy(extend: ol.Extent, resolution: number): ol.Extent[] {
-            console.log('OpenLayersMap: strategy: extend =', extend, ', resolution (deg/pix) =', resolution);
-            // [minx, miny, maxx, maxy]
-            const minx = extend[0];
-            const miny = extend[1];
-            const maxx = extend[2];
-            const maxy = extend[3];
-            const dx = maxx - minx;
-            const dy = maxy - miny;
-            // quad-tree tiling:
-            return [
-                [minx, miny, minx + 0.5 * dx, miny + 0.5 * dy],
-                [minx, miny + 0.5 * dy, minx + 0.5 * dx, miny + dy],
-                [minx + 0.5 * dx, miny, minx + dx, miny + 0.5 * dy],
-                [minx + 0.5 * dx, miny + 0.5 * dy, minx + dx, miny + dy],
-            ];
-        }
-
-        return new ol.layer.Vector({
-            source: new ol.source.Vector({loader, strategy}),
-        });
     }
 }

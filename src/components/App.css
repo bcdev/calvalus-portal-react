@@ -141,5 +141,9 @@
 
 .ol-map {
     margin: 10px 0;
-    width: 700px;
+    flex: 0 0 700px;
+}
+
+.spatial-filter-info {
+    margin: 10px 0 10px 10px;
 }

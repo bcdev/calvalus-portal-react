@@ -1,18 +1,17 @@
 import * as React from 'react';
-import {InputDataset, State} from '../state';
+import {State} from '../state';
 import {connect, Dispatch} from 'react-redux';
 import {OpenLayersMap} from './openlayers/OpenLayersMap';
+import {updateRegionWktSelection} from '../actions';
 
 interface MapPanelProps {
     dispatch: Dispatch<State>;
-    inputDatasets: InputDataset[];
-    selectedDatasetIndex: number[];
+    selectedRegionWkt: string;
 }
 
 function mapStateToProps(state: State) {
     return {
-        inputDatasets: state.data.inputDatasets,
-        selectedDatasetIndex: [state.control.selectedInputDataset]
+        selectedRegionWkt: state.control.selectedRegionWkt
     };
 }
 
@@ -30,10 +29,18 @@ class MapPanel extends React.Component<MapPanelProps, any> {
                         projectionCode="EPSG:4326"
                         offlineMode={false}
                         className="ol-map"
+                        onSelectRegion={this.handleSelectRegion}
                     />
+                    <div className="spatial-filter-info">
+                        Selected region: {this.props.selectedRegionWkt}
+                    </div>
                 </div>
             </div>
         );
+    }
+
+    private handleSelectRegion = (regionWkt: string) => {
+        this.props.dispatch(updateRegionWktSelection(regionWkt));
     }
 }
 

@@ -7,6 +7,7 @@ export const UPDATE_HTTP_CALL_STATUS = 'UPDATE_HTTP_CALL_STATUS';
 export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
 
 export const UPDATE_INPUT_DATASET_SELECTION = 'UPDATE_INPUT_DATASET_SELECTION';
+export const UPDATE_REGION_WKT_SELECTION = 'UPDATE_REGION_WKT_SELECTION';
 
 function addNewHttpCall(httpCall: HttpCall) {
     return {type: ADD_NEW_HTTP_CALL, payload: httpCall};
@@ -36,6 +37,10 @@ function updateInputDatasets(inputDatasets: InputDataset[]) {
 
 export function updateInputDatasetSelection(datasetIndex: number | null) {
     return {type: UPDATE_INPUT_DATASET_SELECTION, payload: datasetIndex};
+}
+
+export function updateRegionWktSelection(newRegionWkt: string) {
+    return {type: UPDATE_REGION_WKT_SELECTION, payload: newRegionWkt};
 }
 
 export function sendInputDatasetRequest() {
