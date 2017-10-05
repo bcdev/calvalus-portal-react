@@ -16,6 +16,7 @@ import UsernamePasswordDialog from './UsernamePasswordDialog';
 import InputDatasetPanel from './InputDatasetPanel';
 import WarningDialog from './WarningDialog';
 import {getExecuteRequest} from '../template/wpsRequest';
+import MapPanel from './MapPanel';
 
 interface AppProps {
     dispatch: Dispatch<State>;
@@ -52,6 +53,7 @@ class App extends React.Component<AppProps, any> {
                 <div className="header">Calvalus Portal</div>
                 <div className="main">
                     <InputDatasetPanel/>
+                    <MapPanel/>
                     <div className="submit-button-container">
                         <Button
                             iconName="pt-icon-play"

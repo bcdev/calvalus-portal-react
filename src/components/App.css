@@ -45,6 +45,7 @@
 .input-dataset-list {
     overflow-y: auto;
     width: 50%;
+    margin: 10px 0 5px 0;
 }
 
 .input-dataset-info {
@@ -117,4 +118,28 @@
     font-size: 14px;
     color: white;
     margin: auto 10px;
+}
+
+.map-container {
+    margin: 10px;
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 500px;
+}
+
+.map-panel-title {
+    background-color: #373B50;
+    color: white;
+    font-size: 20px;
+    padding: 5px;
+}
+
+.map-panel-content {
+    display: flex;
+    height: 100%;
+}
+
+.ol-map {
+    margin: 10px 0;
+    width: 700px;
 }
