@@ -36,6 +36,7 @@ export interface OpenLayersMapProps extends ExternalObjectComponentProps<ol.Map,
     onMapMounted?: (id: string, map: ol.Map) => void;
     onMapUnmounted?: (id: string, map: ol.Map) => void;
     onSelectRegion: (selectedRegion: string) => void;
+    regionSelectorType: 'box' | 'polygon';
 }
 
 interface OpenLayersState {
@@ -101,7 +102,21 @@ export class OpenLayersMap extends ExternalObjectComponent<ol.Map, OpenLayersSta
         // noinspection UnnecessaryLocalVariableJS
         const map = new ol.Map(options);
 
-        this.addDrawingLayer(map);
+        if (this.props.regionSelectorType == 'polygon') {
+            this.addPolygonDrawingLayer(map);
+        } else {
+            this.addBoxDrawingLayer(map);
+        }
+
+        // not yet working due to the file not properly hosted
+        // let presetPolygonLayer = new ol.layer.Vector({
+        //     source: new ol.source.Vector({
+        //         url: 'http://bc-wps:9080/bc-wps/polygon.json',
+        //         format: new ol.format.GeoJSON()
+        //     })
+        // });
+        // console.log("source", presetPolygonLayer.getSource().getFeatures());
+        // map.addLayer(presetPolygonLayer);
 
         return map;
     }
@@ -134,7 +149,102 @@ export class OpenLayersMap extends ExternalObjectComponent<ol.Map, OpenLayersSta
         }
     }
 
-    private addDrawingLayer(map: ol.Map) {
+    private addBoxDrawingLayer(map: ol.Map) {
+        /* Add drawing vector source */
+        let drawingSource = new ol.source.Vector({
+            useSpatialIndex: false
+        });
+
+        /* Add drawing layer */
+        let drawingLayer = new ol.layer.Vector({
+            source: drawingSource
+        });
+        map.addLayer(drawingLayer);
+
+        let draw = new ol.interaction.Draw({
+            source: drawingSource,
+            type: 'Circle',
+            // only draw when Ctrl is pressed.
+            condition: ol.events.condition.platformModifierKeyOnly,
+            geometryFunction: ol.interaction.Draw.createBox()
+        });
+        map.addInteraction(draw);
+
+        /* add ol.collection to hold all selected features */
+        let select = new ol.interaction.Select();
+        map.addInteraction(select);
+        let selectedFeatures = select.getFeatures();
+
+        selectedFeatures.on('add', (event: any) => {
+            let coordinates = event.target.item(0).getGeometry().getCoordinates();
+            let polygonString: string = 'POLYGON((';
+            console.log('coordinates', coordinates[0]);
+            for (let coordinate of coordinates[0]) {
+                polygonString = polygonString.concat(coordinate[0]).concat(' ').concat(coordinate[1]).concat(',');
+            }
+            polygonString = polygonString.concat('))');
+            this.props.onSelectRegion(polygonString);
+        });
+
+        selectedFeatures.on('remove', () => {
+            this.props.onSelectRegion('');
+        });
+
+        let sketch;
+
+        /* Deactivate select and delete any existing polygons.
+            Only one polygon drawn at a time. */
+        draw.on(
+            'drawstart', () => {
+                drawingSource.clear();
+                select.setActive(false);
+            },
+            this);
+
+        /* Reactivate select after 300ms (to avoid single click trigger)
+            and create final set of selected features. */
+        draw.on('drawend', () => {
+            sketch = null;
+            setTimeout(
+                () => {
+                    select.setActive(true);
+                },
+                300);
+            selectedFeatures.clear();
+        });
+
+        /* Modify polygons interaction */
+
+        let modify = new ol.interaction.Modify({
+            // only allow modification of drawn polygons
+            features: drawingSource.getFeaturesCollection()
+        });
+        map.addInteraction(modify);
+
+        /* Point features select/deselect as you move polygon.
+            Deactivate select interaction. */
+        modify.on(
+            'modifystart', (event: any) => {
+                sketch = event.features;
+                select.setActive(false);
+            },
+            this);
+
+        /* Reactivate select function */
+        modify.on(
+            'modifyend', () => {
+                sketch = null;
+                setTimeout(
+                    () => {
+                        select.setActive(true);
+                    },
+                    300);
+                selectedFeatures.clear();
+            },
+            this);
+    }
+
+    private addPolygonDrawingLayer(map: ol.Map) {
         /* Add drawing vector source */
         let drawingSource = new ol.source.Vector({
             useSpatialIndex: false

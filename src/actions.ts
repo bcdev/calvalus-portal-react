@@ -1,6 +1,8 @@
 import {Dispatch} from 'react-redux';
 import {HttpCall, HttpCallMethod, HttpCallStatus, InputDataset, State} from './state';
 
+export const UPDATE_USER_NAME = 'UPDATE_USER_NAME';
+
 export const ADD_NEW_HTTP_CALL = 'ADD_NEW_HTTP_CALL';
 export const UPDATE_HTTP_CALL_RESPONSE = 'UPDATE_HTTP_CALL_RESPONSE';
 export const UPDATE_HTTP_CALL_STATUS = 'UPDATE_HTTP_CALL_STATUS';
@@ -8,6 +10,10 @@ export const UPDATE_INPUT_DATASETS = 'UPDATE_INPUT_DATASETS';
 
 export const UPDATE_INPUT_DATASET_SELECTION = 'UPDATE_INPUT_DATASET_SELECTION';
 export const UPDATE_REGION_WKT_SELECTION = 'UPDATE_REGION_WKT_SELECTION';
+
+export function updateUserName(userName: string) {
+    return {type: UPDATE_USER_NAME, payload: userName};
+}
 
 function addNewHttpCall(httpCall: HttpCall) {
     return {type: ADD_NEW_HTTP_CALL, payload: httpCall};
@@ -41,6 +47,31 @@ export function updateInputDatasetSelection(datasetIndex: number | null) {
 
 export function updateRegionWktSelection(newRegionWkt: string) {
     return {type: UPDATE_REGION_WKT_SELECTION, payload: newRegionWkt};
+}
+
+export function sendTestRequest() {
+    return (dispatch: Dispatch<State>, getState: Function) => {
+        const id: number = resolveNewId(getState().communication.httpCalls);
+        let httpCall: HttpCall = {
+            id: id,
+            method: HttpCallMethod.GET,
+            url: 'http://localhost:8080/calvalus-rest/calvalus/test'
+        };
+        const successfulAction = (response: Response) => {
+            if (response.body) {
+                response.text()
+                    .then((data) => {
+                        console.log('inside response', data);
+                    });
+            }
+        };
+        const failedAction = (error: any) => {
+            console.error(error);
+        };
+        sendHttpRequest(httpCall, successfulAction, failedAction);
+        httpCall = Object.assign({}, httpCall, {status: HttpCallStatus.SENT});
+        dispatch(addNewHttpCall(httpCall));
+    };
 }
 
 export function sendInputDatasetRequest() {
@@ -148,7 +179,8 @@ function doHttpCall(httpCall: HttpCall): Promise<Response> {
     };
     if (httpCall.headers) {
         configuration = Object.assign({}, configuration, {
-            headers: {...httpCall.headers}
+            headers: {...httpCall.headers},
+            credentials: 'same-origin'
         });
     }
     if (httpCall.method === HttpCallMethod.POST && httpCall.requestBody) {
@@ -156,7 +188,10 @@ function doHttpCall(httpCall: HttpCall): Promise<Response> {
             body: httpCall.requestBody
         });
     }
-    return fetch(httpCall.url, {...configuration});
+    return fetch(httpCall.url, {
+        ...configuration,
+        credentials: 'same-origin'
+    });
 }
 
 function onSuccessful(processResponse: (response: Response) => void) {

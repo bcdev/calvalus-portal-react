@@ -8,6 +8,7 @@ import {applyMiddleware, createStore} from 'redux';
 import {reducers} from './reducers';
 import thunkMiddleware from 'redux-thunk';
 import {createLogger} from 'redux-logger';
+import {updateUserName} from './actions';
 
 const logger = createLogger({
     level: 'info',
@@ -28,4 +29,11 @@ ReactDOM.render(
     </Provider>,
     document.getElementById('root') as HTMLElement
 );
+let rootElement = document.getElementById('root');
+if (rootElement) {
+    let cookie = document.cookie;
+    const startIndex = 'userName='.length;
+    let userName = cookie.substr(startIndex, cookie.indexOf(';') > 0 ? cookie.indexOf(';') - startIndex : undefined);
+    store.dispatch(updateUserName(userName));
+}
 registerServiceWorker();

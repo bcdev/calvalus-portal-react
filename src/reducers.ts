@@ -39,6 +39,11 @@ const controlReducer = (state: ControlState = initialControlState, action: Actio
 
 const sessionReducer = (state: SessionState = initialSessionState, action: Action) => {
     switch (action.type) {
+        case actions.UPDATE_USER_NAME: {
+            return Object.assign({}, state, {
+                userName: action.payload
+            });
+        }
         default:
             return state;
     }

@@ -17,9 +17,11 @@ export interface CommunicationState {
 export interface ControlState {
     selectedInputDataset: number | null;
     selectedRegionWkt: string;
+    regionSelectorType: 'box' | 'polygon';
 }
 
 export interface SessionState {
+    userName?: string;
 }
 
 export interface LocationState {

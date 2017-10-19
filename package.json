@@ -1,5 +1,6 @@
 {
   "name": "calvalus-portal-react",
+  "homepage" : "http://localhost:8080/calvalus-rest",
   "version": "0.0.1-dev",
   "private": true,
   "dependencies": {

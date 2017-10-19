@@ -7,11 +7,13 @@ import {updateRegionWktSelection} from '../actions';
 interface MapPanelProps {
     dispatch: Dispatch<State>;
     selectedRegionWkt: string;
+    regionSelectorType: 'box' | 'polygon';
 }
 
 function mapStateToProps(state: State) {
     return {
-        selectedRegionWkt: state.control.selectedRegionWkt
+        selectedRegionWkt: state.control.selectedRegionWkt,
+        regionSelectorType: state.control.regionSelectorType
     };
 }
 
@@ -30,6 +32,7 @@ class MapPanel extends React.Component<MapPanelProps, any> {
                         offlineMode={false}
                         className="ol-map"
                         onSelectRegion={this.handleSelectRegion}
+                        regionSelectorType={this.props.regionSelectorType}
                     />
                     <div className="spatial-filter-info">
                         Selected region: {this.props.selectedRegionWkt}

@@ -11,7 +11,7 @@ import 'brace/ext/searchbox';
 import {Button} from '@blueprintjs/core';
 import {connect, Dispatch} from 'react-redux';
 import {HttpCall, InputDataset, State} from '../state';
-import {sendInputDatasetRequest, sendWpsRequest} from '../actions';
+import {sendInputDatasetRequest, sendTestRequest, sendWpsRequest} from '../actions';
 import UsernamePasswordDialog from './UsernamePasswordDialog';
 import InputDatasetPanel from './InputDatasetPanel';
 import WarningDialog from './WarningDialog';
@@ -82,6 +82,13 @@ class App extends React.Component<AppProps, any> {
                             onClick={this.handleExecuteCall}
                         >
                             Execute
+                        </Button>
+                        <Button
+                            iconName="pt-icon-play"
+                            className="pt-intent-primary"
+                            onClick={this.handleTestCall}
+                        >
+                            Test
                         </Button>
                     </div>
                     <div className="response-container">
@@ -162,6 +169,10 @@ class App extends React.Component<AppProps, any> {
         } else {
             this.openUserPasswordDialog('execute');
         }
+    }
+
+    private handleTestCall = () => {
+        this.props.dispatch(sendTestRequest());
     }
 
     private openDatasetNotSelectedDialog = () => {
